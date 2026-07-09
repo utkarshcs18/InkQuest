@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="InkQuest Dashboard - Manage your personal library and reading lists.">
+    <title>Dashboard - InkQuest</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/main.css">
+</head>
+<body>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <h1 class="logo" onclick="window.location.href='/'">Ink<span>Quest</span></h1>
+            <div class="nav-actions">
+                <a href="/" class="btn-outline">Back to Search</a>
+                <button type="button" id="btn-logout" class="btn-primary">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Dashboard Content -->
+    <div class="app-container">
+        <header class="header">
+            <h2 class="dash-header-title">
+                Welcome back, <span id="dash-username" class="dash-username-text">Explorer</span>!
+            </h2>
+            <p class="subtitle">Here is your personal library dashboard.</p>
+        </header>
+
+        <main class="results-container dash-main-container">
+            <div class="dash-card">
+                <h3 class="dash-card-title">Your Reading List</h3>
+                <p class="dash-card-text">
+                    You haven't saved any books yet. Head over to the search page to discover your next adventure!
+                </p>
+                <a href="/" class="btn-primary">Find Books</a>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const token    = localStorage.getItem('inkquest_token');
+            const username = localStorage.getItem('inkquest_username');
+
+            // Redirect to home if not logged in
+            if (!token || !username) {
+                window.location.href = '/';
+                return;
+            }
+
+            document.getElementById('dash-username').textContent = username;
+
+            document.getElementById('btn-logout').addEventListener('click', () => {
+                localStorage.removeItem('inkquest_token');
+                localStorage.removeItem('inkquest_username');
+                window.location.href = '/';
+            });
+        });
+    </script>
+
+</body>
+</html>

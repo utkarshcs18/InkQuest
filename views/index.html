@@ -3,9 +3,111 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <meta name="description" content="InkQuest - Discover books and read curious introductions. Your online library powered by curiosity.">
+    <title>InkQuest - Discover Curious Books</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/main.css">
 </head>
 <body>
-    
+
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <h1 class="logo">Ink<span>Quest</span></h1>
+            <div class="nav-actions" id="nav-actions">
+                <!-- Dynamically rendered by main.js based on auth state -->
+                <button type="button" id="btn-login-modal" class="btn-outline">Login</button>
+                <button type="button" id="btn-signup-modal" class="btn-primary">Sign Up</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="app-container">
+
+        <!-- Search Header -->
+        <header class="header">
+            <p class="subtitle">Search for any book and satisfy your curiosity.</p>
+            <div class="search-container">
+                <form id="search-form" role="search">
+                    <input
+                        type="text"
+                        id="search-input"
+                        placeholder="Enter a book title, e.g. The Hobbit..."
+                        autocomplete="off"
+                        required
+                        aria-label="Search for a book"
+                    />
+                    <button type="submit" id="search-button" aria-label="Search">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                    </button>
+                </form>
+            </div>
+        </header>
+
+        <!-- Loading Spinner -->
+        <div id="loader" class="loader hidden" aria-live="polite" aria-label="Loading..."></div>
+
+        <!-- Error / Info Messages -->
+        <div id="error-message" class="error-message hidden" role="alert"></div>
+
+        <!-- Book Results Grid -->
+        <main class="results-container">
+            <div id="book-grid" class="book-grid"></div>
+        </main>
+
+    </div>
+
+    <!-- ============================
+         Auth Modal (Login / Signup)
+         ============================ -->
+    <div id="auth-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="auth-title">
+        <div class="modal-box auth-box">
+            <button type="button" id="close-auth-modal" class="close-btn" aria-label="Close">&times;</button>
+            <h2 id="auth-title">Login to InkQuest</h2>
+            <form id="auth-form" class="auth-form" novalidate>
+                <div id="auth-error" class="auth-error hidden" role="alert"></div>
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" autocomplete="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" autocomplete="current-password" required>
+                </div>
+                <button type="submit" id="auth-submit-btn" class="btn-primary full-width">Login</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ============================
+         Book Detail Modal
+         ============================ -->
+    <div id="book-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+        <div class="modal-box">
+            <button type="button" id="close-modal" class="close-btn" aria-label="Close">&times;</button>
+            <div class="modal-body">
+                <div class="modal-image-container">
+                    <img id="modal-cover" src="" alt="" class="hidden" />
+                    <div id="modal-cover-placeholder" class="placeholder-cover">No Cover</div>
+                </div>
+                <div class="modal-info">
+                    <h2 id="modal-title"></h2>
+                    <p id="modal-author" class="author-name"></p>
+                    <div class="divider"></div>
+                    <p class="intro-heading">A Curious Introduction</p>
+                    <div id="modal-loader" class="loader modal-loader hidden"></div>
+                    <div id="modal-description" class="description-text"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/main.js"></script>
 </body>
 </html>
