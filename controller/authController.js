@@ -10,10 +10,10 @@ const generateToken = (userId) => {
 
 const signup = async (req, res) => {
     try {
-        const { username, password } = req.body;
+        const { name, username, password } = req.body;
 
-        if (!username || !password) {
-            return res.status(400).json({ error: 'Username and password are required' });
+        if (!name || !username || !password) {
+            return res.status(400).json({ error: 'Name, username, and password are required' });
         }
 
         // Check if user exists
@@ -23,7 +23,7 @@ const signup = async (req, res) => {
         }
 
         // Create new user
-        const user = new User({ username, password });
+        const user = new User({ name, username, password });
         await user.save();
 
         // Generate token
@@ -32,7 +32,8 @@ const signup = async (req, res) => {
         res.status(201).json({
             message: 'User created successfully',
             token,
-            username: user.username
+            username: user.username,
+            name: user.name
         });
     } catch (error) {
         console.error('Signup error:', error);
@@ -66,7 +67,8 @@ const login = async (req, res) => {
         res.json({
             message: 'Login successful',
             token,
-            username: user.username
+            username: user.username,
+            name: user.name
         });
     } catch (error) {
         console.error('Login error:', error);

@@ -5,6 +5,7 @@ require('dotenv').config();
 
 const bookRoutes = require('./routes/bookRoutes');
 const authRoutes = require('./routes/authRoutes');
+const userRoutes = require('./routes/userRoutes');
 const dbConnect = require('./config/dbConnect');
 
 const app = express();
@@ -23,6 +24,7 @@ app.use(express.static(path.join(__dirname, 'views')));
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/books', bookRoutes);
+app.use('/api/users', userRoutes);
 
 // Dashboard route 
 app.get('/dashboard', (req, res) => {

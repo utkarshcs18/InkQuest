@@ -65,7 +65,34 @@ const getBookDetails = async (req, res) => {
     }
 };
 
+// Fetch famous book recommendations
+const getRecommendations = async (req, res) => {
+    try {
+        // Query Open Library for popular books, e.g. using a predefined subject or query
+        const query = 'subject:classic_literature'; // Fetch some classics
+        const response = await axios.get(`https://openlibrary.org/search.json?q=${encodeURIComponent(query)}&limit=8`, {
+            headers: {
+                'User-Agent': 'InkQuestApp/1.0 (developer@inkquest.app)'
+            }
+        });
+        
+        const books = response.data.docs.map(doc => ({
+            id: doc.key,
+            title: doc.title,
+            author: doc.author_name ? doc.author_name.join(', ') : 'Unknown Author',
+            coverId: doc.cover_i,
+            firstPublishYear: doc.first_publish_year
+        }));
+
+        res.json({ books });
+    } catch (error) {
+        console.error('Error fetching recommendations:', error.message);
+        res.status(500).json({ error: 'Failed to fetch recommendations' });
+    }
+};
+
 module.exports = {
     searchBooks,
-    getBookDetails
+    getBookDetails,
+    getRecommendations
 };

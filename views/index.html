@@ -56,8 +56,17 @@
         <!-- Error / Info Messages -->
         <div id="error-message" class="error-message hidden" role="alert"></div>
 
+        <!-- Recommendations Section -->
+        <section id="recommendations-section" class="recommendations-section">
+            <h2 class="section-title">Famous Books Recommendations</h2>
+            <div id="recommendations-grid" class="book-grid">
+                <!-- Books will be injected here -->
+            </div>
+        </section>
+
         <!-- Book Results Grid -->
-        <main class="results-container">
+        <main class="results-container hidden" id="search-results-section">
+            <h2 class="section-title">Search Results</h2>
             <div id="book-grid" class="book-grid"></div>
         </main>
 
@@ -72,6 +81,10 @@
             <h2 id="auth-title">Login to InkQuest</h2>
             <form id="auth-form" class="auth-form" novalidate>
                 <div id="auth-error" class="auth-error hidden" role="alert"></div>
+                <div class="form-group hidden" id="name-group">
+                    <label for="name">Full Name</label>
+                    <input type="text" id="name" name="name" autocomplete="name">
+                </div>
                 <div class="form-group">
                     <label for="username">Username</label>
                     <input type="text" id="username" name="username" autocomplete="username" required>
@@ -81,6 +94,10 @@
                     <input type="password" id="password" name="password" autocomplete="current-password" required>
                 </div>
                 <button type="submit" id="auth-submit-btn" class="btn-primary full-width">Login</button>
+                <div class="auth-divider">
+                    <span>OR</span>
+                </div>
+                <button type="button" id="auth-toggle-btn" class="btn-outline full-width">Sign Up</button>
             </form>
         </div>
     </div>
@@ -97,7 +114,12 @@
                     <div id="modal-cover-placeholder" class="placeholder-cover">No Cover</div>
                 </div>
                 <div class="modal-info">
-                    <h2 id="modal-title"></h2>
+                    <div class="modal-header-actions">
+                        <h2 id="modal-title"></h2>
+                        <button type="button" id="btn-like-book" class="like-btn hidden" aria-label="Like this book">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="heart-icon"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                        </button>
+                    </div>
                     <p id="modal-author" class="author-name"></p>
                     <div class="divider"></div>
                     <p class="intro-heading">A Curious Introduction</p>

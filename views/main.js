@@ -19,6 +19,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const usernameInput    = document.getElementById('username');
     const passwordInput    = document.getElementById('password');
     const authError        = document.getElementById('auth-error');
+    const nameGroup        = document.getElementById('name-group');
+    const nameInput        = document.getElementById('name');
+    const authToggleBtn    = document.getElementById('auth-toggle-btn');
+    
+    // Recommendations and Search Sections
+    const recommendationsSection = document.getElementById('recommendations-section');
+    const searchResultsSection   = document.getElementById('search-results-section');
+    const recommendationsGrid    = document.getElementById('recommendations-grid');
 
     // Book detail modal elements
     const bookModal        = document.getElementById('book-modal');
@@ -29,24 +37,42 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalPlaceholder = document.getElementById('modal-cover-placeholder');
     const modalDescription = document.getElementById('modal-description');
     const modalLoader      = document.getElementById('modal-loader');
+    const btnLikeBook      = document.getElementById('btn-like-book');
 
     let currentAuthAction = 'login'; // 'login' | 'signup'
+    let likedBooksSet     = new Set();
+    let currentBookData   = null;
 
     // =============================================
     // Auth State — Update Navbar
     // =============================================
-    function checkAuthState() {
+    async function checkAuthState() {
         const token    = localStorage.getItem('inkquest_token');
         const username = localStorage.getItem('inkquest_username');
+        const name     = localStorage.getItem('inkquest_name') || username; // Fallback to username if name is missing
 
         if (token && username) {
             navActions.innerHTML = `
-                <span class="user-greeting">Hi, <strong>${username}</strong></span>
+                <span class="user-greeting">Hi, <strong>${name}</strong></span>
                 <a href="/dashboard" class="btn-outline">Dashboard</a>
                 <button type="button" id="btn-logout" class="btn-primary">Logout</button>
             `;
             document.getElementById('btn-logout').addEventListener('click', handleLogout);
+            
+            // Fetch liked books silently
+            try {
+                const response = await fetch('/api/users/liked-books', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    likedBooksSet = new Set(data.likedBooks.map(b => b.bookId));
+                }
+            } catch (err) {
+                console.error('Error fetching liked books on init:', err);
+            }
         } else {
+            likedBooksSet.clear();
             navActions.innerHTML = `
                 <button type="button" id="btn-login-modal" class="btn-outline">Login</button>
                 <button type="button" id="btn-signup-modal" class="btn-primary">Sign Up</button>
@@ -61,11 +87,28 @@ document.addEventListener('DOMContentLoaded', () => {
         authTitle.textContent    = action === 'login' ? 'Login to InkQuest' : 'Create an Account';
         authSubmitBtn.textContent = action === 'login' ? 'Login' : 'Sign Up';
         authError.classList.add('hidden');
+        nameInput.value = '';
         usernameInput.value = '';
         passwordInput.value = '';
+        
+        if (action === 'signup') {
+            nameGroup.classList.remove('hidden');
+            nameInput.required = true;
+            authToggleBtn.textContent = 'Login Instead';
+        } else {
+            nameGroup.classList.add('hidden');
+            nameInput.required = false;
+            authToggleBtn.textContent = 'Sign Up Instead';
+        }
+
         authModal.classList.remove('hidden');
         document.body.style.overflow = 'hidden';
-        usernameInput.focus();
+        
+        if (action === 'signup') {
+            nameInput.focus();
+        } else {
+            usernameInput.focus();
+        }
     }
 
     function closeAuthModalFn() {
@@ -76,6 +119,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function handleLogout() {
         localStorage.removeItem('inkquest_token');
         localStorage.removeItem('inkquest_username');
+        localStorage.removeItem('inkquest_name');
         bookGrid.innerHTML = '';
         checkAuthState();
         showMessage('You have been logged out successfully.');
@@ -86,9 +130,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // =============================================
     authForm.addEventListener('submit', async (e) => {
         e.preventDefault();
+        const name     = nameInput.value.trim();
         const username = usernameInput.value.trim();
         const password = passwordInput.value.trim();
         if (!username || !password) return;
+        if (currentAuthAction === 'signup' && !name) return;
 
         authSubmitBtn.disabled    = true;
         authSubmitBtn.textContent = 'Please wait...';
@@ -96,16 +142,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             const url      = currentAuthAction === 'login' ? '/api/auth/login' : '/api/auth/signup';
+            const bodyData = currentAuthAction === 'login' ? { username, password } : { name, username, password };
+            
             const response = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password })
+                body: JSON.stringify(bodyData)
             });
             const data = await response.json();
 
             if (response.ok) {
                 localStorage.setItem('inkquest_token',    data.token);
                 localStorage.setItem('inkquest_username', data.username);
+                localStorage.setItem('inkquest_name',     data.name || data.username);
                 closeAuthModalFn();
                 checkAuthState();
                 errorMessage.classList.add('hidden');
@@ -121,6 +170,13 @@ document.addEventListener('DOMContentLoaded', () => {
             authSubmitBtn.disabled    = false;
             authSubmitBtn.textContent = currentAuthAction === 'login' ? 'Login' : 'Sign Up';
         }
+    });
+
+    // Toggle between login and signup
+    authToggleBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const newAction = currentAuthAction === 'login' ? 'signup' : 'login';
+        openAuthModal(newAction);
     });
 
     // Close auth modal
@@ -147,6 +203,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // Reset UI
         bookGrid.innerHTML = '';
         errorMessage.classList.add('hidden');
+        recommendationsSection.classList.add('hidden');
+        searchResultsSection.classList.remove('hidden');
         loader.classList.remove('hidden');
 
         try {
@@ -174,7 +232,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // =============================================
     // Render Book Cards
     // =============================================
-    function renderBooks(books) {
+    function renderBooks(books, container = bookGrid) {
         if (!books || books.length === 0) {
             showMessage('No books found for that search. Try a different title!');
             return;
@@ -203,26 +261,71 @@ document.addEventListener('DOMContentLoaded', () => {
                 ${book.firstPublishYear ? `<span class="book-year">${book.firstPublishYear}</span>` : ''}
             `;
 
-            card.addEventListener('click', () => openBookModal(book.id, book.title, book.author, coverUrl));
+            card.addEventListener('click', () => openBookModal(book.id, book.title, book.author, coverUrl, book.firstPublishYear));
             card.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter' || e.key === ' ') openBookModal(book.id, book.title, book.author, coverUrl);
+                if (e.key === 'Enter' || e.key === ' ') openBookModal(book.id, book.title, book.author, coverUrl, book.firstPublishYear);
             });
 
-            bookGrid.appendChild(card);
+            container.appendChild(card);
         });
     }
 
     // =============================================
-    // Book Detail Modal
+    // Fetch Recommendations on Load
     // =============================================
-    async function openBookModal(bookId, title, author, coverUrl) {
+    async function fetchRecommendations() {
+        if (recommendationsGrid) {
+            try {
+                // Show a quick loader just in case
+                recommendationsGrid.innerHTML = '<div class="loader"></div>';
+                const response = await fetch('/api/books/recommendations');
+                const data = await response.json();
+                
+                recommendationsGrid.innerHTML = ''; // clear loader
+                if (response.ok) {
+                    renderBooks(data.books, recommendationsGrid);
+                } else {
+                    recommendationsGrid.innerHTML = '<p class="error-message">Failed to load recommendations.</p>';
+                }
+            } catch (err) {
+                console.error('Error fetching recommendations:', err);
+                recommendationsGrid.innerHTML = '<p class="error-message">Network error loading recommendations.</p>';
+            }
+        }
+    }
+
+    // =============================================
+    // Book Detail Modal & Like Logic
+    // =============================================
+    async function openBookModal(bookId, title, author, coverUrl, firstPublishYear) {
         const id = bookId.replace('/works/', '');
+        
+        currentBookData = {
+            bookId: id,
+            title,
+            author,
+            coverId: coverUrl ? coverUrl.split('/').pop().split('-')[0] : null,
+            firstPublishYear
+        };
 
         // Reset & populate modal
         modalTitle.textContent   = title;
         modalAuthor.textContent  = author;
         modalDescription.innerHTML = '';
         modalLoader.classList.remove('hidden');
+
+        // Setup Like Button State
+        const token = localStorage.getItem('inkquest_token');
+        if (token) {
+            btnLikeBook.classList.remove('hidden');
+            if (likedBooksSet.has(id)) {
+                btnLikeBook.classList.add('liked');
+            } else {
+                btnLikeBook.classList.remove('liked');
+            }
+        } else {
+            btnLikeBook.classList.add('hidden');
+        }
 
         if (coverUrl) {
             modalCover.src = coverUrl;
@@ -242,7 +345,21 @@ document.addEventListener('DOMContentLoaded', () => {
             const data     = await response.json();
 
             if (response.ok && data.description) {
-                modalDescription.innerHTML = data.description.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>');
+                let formattedDesc = data.description
+                    .replace(/\n\n/g, '</p><p>')
+                    .replace(/\n/g, '<br>');
+                
+                // Convert URLs (http, https, www) into cool clickable links
+                const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+)/g;
+                formattedDesc = formattedDesc.replace(urlRegex, (url) => {
+                    const href = url.startsWith('http') ? url : `https://${url}`;
+                    return `<a href="${href}" target="_blank" rel="noopener noreferrer" class="cool-link">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                        Read / View Document
+                    </a>`;
+                });
+
+                modalDescription.innerHTML = formattedDesc;
             } else {
                 modalDescription.textContent = 'No introduction available for this book yet.';
             }
@@ -257,11 +374,64 @@ document.addEventListener('DOMContentLoaded', () => {
     function closeBookModal() {
         bookModal.classList.add('hidden');
         document.body.style.overflow = '';
+        currentBookData = null;
     }
 
     closeModal.addEventListener('click', closeBookModal);
     bookModal.addEventListener('click', (e) => {
         if (e.target === bookModal) closeBookModal();
+    });
+
+    // Handle Like Button Click
+    btnLikeBook.addEventListener('click', async () => {
+        const token = localStorage.getItem('inkquest_token');
+        if (!token || !currentBookData) return;
+
+        const isLiked = likedBooksSet.has(currentBookData.bookId);
+        const endpoint = isLiked ? '/api/users/unlike' : '/api/users/like';
+
+        // Optimistic UI update
+        if (isLiked) {
+            btnLikeBook.classList.remove('liked');
+            likedBooksSet.delete(currentBookData.bookId);
+        } else {
+            btnLikeBook.classList.add('liked');
+            likedBooksSet.add(currentBookData.bookId);
+        }
+
+        try {
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(currentBookData)
+            });
+
+            if (!response.ok) {
+                // Revert optimistic update on failure
+                if (isLiked) {
+                    btnLikeBook.classList.add('liked');
+                    likedBooksSet.add(currentBookData.bookId);
+                } else {
+                    btnLikeBook.classList.remove('liked');
+                    likedBooksSet.delete(currentBookData.bookId);
+                }
+                const data = await response.json();
+                showMessage(data.error || 'Failed to update like status');
+            }
+        } catch (err) {
+            console.error('Like toggle error:', err);
+            // Revert on error
+            if (isLiked) {
+                btnLikeBook.classList.add('liked');
+                likedBooksSet.add(currentBookData.bookId);
+            } else {
+                btnLikeBook.classList.remove('liked');
+                likedBooksSet.delete(currentBookData.bookId);
+            }
+        }
     });
 
     // Close any modal on Escape key
@@ -291,4 +461,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Init
     // =============================================
     checkAuthState();
+    if (document.getElementById('recommendations-section')) {
+        fetchRecommendations();
+    }
 });

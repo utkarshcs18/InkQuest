@@ -104,11 +104,7 @@ body {
     line-height: 1;
 }
 
-.btn-primary:hover {
-    background: var(--accent-hover);
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
-}
+
 
 .btn-outline {
     display: inline-flex;
@@ -128,9 +124,7 @@ body {
     line-height: 1;
 }
 
-.btn-outline:hover {
-    background: var(--accent-light);
-}
+
 
 /* =============================================
    Logo
@@ -295,7 +289,6 @@ body {
 }
 
 .book-card:hover {
-    transform: translateY(-8px);
     box-shadow: var(--shadow-lg);
     border-color: rgba(255, 117, 143, 0.2);
 }
@@ -314,12 +307,7 @@ body {
 .book-cover {
     width: 100%;
     height: 100%;
-    object-fit: cover;
-    transition: transform 0.4s ease;
-}
-
-.book-card:hover .book-cover {
-    transform: scale(1.06);
+    object-fit: contain;
 }
 
 .placeholder-cover {
@@ -499,11 +487,7 @@ body {
     z-index: 10;
 }
 
-.close-btn:hover {
-    background: var(--accent-light);
-    color: var(--accent-color);
-    transform: rotate(90deg);
-}
+
 
 .modal-body {
     display: flex;
@@ -549,13 +533,47 @@ body {
     overflow-y: auto;
 }
 
+.modal-header-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 0.4rem;
+    padding-right: 2.5rem; /* Prevents overlap with the absolute close button */
+}
+
 #modal-title {
     font-size: 1.6rem;
     font-weight: 700;
     line-height: 1.25;
-    margin-bottom: 0.4rem;
     color: var(--text-primary);
-    padding-right: 2rem;
+    margin-bottom: 0;
+}
+
+.like-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 0.4rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: var(--transition);
+}
+
+.like-btn:hover {
+    color: var(--accent-color);
+    background: rgba(255, 117, 143, 0.1);
+}
+
+.like-btn.liked {
+    color: var(--accent-color);
+}
+
+.like-btn.liked .heart-icon {
+    fill: var(--accent-color);
 }
 
 .author-name {
@@ -590,6 +608,33 @@ body {
 /* =============================================
    Dashboard
    ============================================= */
+.section-title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 2rem 0 1.5rem;
+    text-align: left;
+}
+
+.auth-divider {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    margin: 1.5rem 0;
+    color: var(--text-secondary);
+}
+.auth-divider::before,
+.auth-divider::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid #e8dde0;
+}
+.auth-divider span {
+    padding: 0 10px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
 .dash-header-title {
     font-size: 2rem;
     font-weight: 700;
@@ -639,4 +684,25 @@ body {
     .book-grid { grid-template-columns: 1fr; }
     #search-input { padding: 0.85rem 1rem; font-size: 0.9rem; }
     .dash-header-title { font-size: 1.5rem; }
+}
+
+/* =============================================
+   Cool Links (For PDFs / External)
+   ============================================= */
+.cool-link {
+    display: inline-flex;
+    align-items: center;
+    color: var(--accent-color);
+    font-weight: 600;
+    text-decoration: none;
+    padding: 0.3rem 0.8rem;
+    border-radius: 4px;
+    background: rgba(255, 117, 143, 0.1);
+    border: 1px solid rgba(255, 117, 143, 0.2);
+    margin: 0.3rem 0;
+    font-size: 0.95rem;
+}
+
+.cool-link svg {
+    margin-right: 6px;
 }

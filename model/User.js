@@ -2,6 +2,12 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
 const userSchema = new mongoose.Schema({
+    name: {
+        type: String,
+        required: true,
+        trim: true,
+        minlength: 2
+    },
     username: {
         type: String,
         required: true,
@@ -13,7 +19,14 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: true,
         minlength: 6
-    }
+    },
+    likedBooks: [{
+        bookId: String,
+        title: String,
+        author: String,
+        coverId: String,
+        firstPublishYear: Number
+    }]
 }, { timestamps: true });
 
 // Pre-save hook to hash password before saving to database
