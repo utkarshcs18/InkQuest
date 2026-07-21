@@ -1,10 +1,9 @@
 const User = require('../model/User');
 const jwt = require('jsonwebtoken');
 
-// Helper to generate JWT
 const generateToken = (userId) => {
     return jwt.sign({ userId }, process.env.JWT_SECRET || 'inkquest_super_secret', {
-        expiresIn: '7d' // Token expires in 7 days
+        expiresIn: '7d'
     });
 };
 
@@ -16,17 +15,14 @@ const signup = async (req, res) => {
             return res.status(400).json({ error: 'Name, username, and password are required' });
         }
 
-        // Check if user exists
         const existingUser = await User.findOne({ username });
         if (existingUser) {
             return res.status(400).json({ error: 'Username already taken' });
         }
 
-        // Create new user
         const user = new User({ name, username, password });
         await user.save();
 
-        // Generate token
         const token = generateToken(user._id);
 
         res.status(201).json({
@@ -49,19 +45,16 @@ const login = async (req, res) => {
             return res.status(400).json({ error: 'Username and password are required' });
         }
 
-        // Find user
         const user = await User.findOne({ username });
         if (!user) {
             return res.status(401).json({ error: 'Invalid username or password' });
         }
 
-        // Compare password
         const isMatch = await user.comparePassword(password);
         if (!isMatch) {
             return res.status(401).json({ error: 'Invalid username or password' });
         }
 
-        // Generate token
         const token = generateToken(user._id);
 
         res.json({
